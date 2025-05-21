@@ -1,0 +1,68 @@
+/* Estilos principais */
+.conteudo-principal {
+  padding: 20px;
+  width: 100%;
+}
+
+.linha-cabecalho {
+  padding: 10px 0;
+  border-bottom: 1px solid #dee2e6;
+}
+
+/* Status badges */
+.status-ativo {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.status-inativo {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+/* Botões de ação */
+.botoes-acao .btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  margin-right: 5px;
+}
+
+/* Tabela responsiva */
+.table-responsive {
+  overflow-x: auto;
+}
+
+/* Estilos de cartão */
+.card {
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eee;
+  padding: 15px 20px;
+  font-weight: 500;
+}
+
+/* Ajustes responsivos */
+@media (max-width: 768px) {
+  .linha-cabecalho {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .linha-cabecalho > div {
+    margin-top: 10px;
+  }
+  
+  .botoes-acao .btn {
+    margin-bottom: 5px;
+  }
+}

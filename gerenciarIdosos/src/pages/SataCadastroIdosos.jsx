@@ -1,0 +1,489 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Container, 
+  Row, 
+  Col, 
+  Form, 
+  Button, 
+  Breadcrumb, 
+  Card,
+  Alert
+} from 'react-bootstrap';
+import { 
+  PersonFill, 
+  HouseFill, 
+  CalendarCheck,
+  FileText 
+} from 'react-bootstrap-icons';
+import { useParams, useNavigate } from 'react-router-dom';
+import './SataCadastroIdosos.css';
+import {
+  validarFormulario,
+  formatarTelefone,
+  formatarCPF,
+  formatarCEP,
+  estadosBrasileiros
+} from './validacoes';
+
+const SataCadastroIdosos = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const estaEditando = !!id;
+  
+  const [formData, setFormData] = useState({
+    nome: '',
+    dataNascimento: '',
+    genero: '',
+    rg: '',
+    cpf: '',
+    cartaoSus: '',
+    telefone: '',
+    rua: '',
+    numero: '',
+    complemento: '',
+    cidade: '',
+    estado: '',
+    cep: '',
+    dataEntrada: '',
+    quarto: '',
+    cama: '',
+    observacoes: '',
+    historicoMedico: ''
+  });
+  
+  const [erros, setErros] = useState({});
+  const [submetido, setSubmetido] = useState(false);
+
+  useEffect(() => {
+    if (estaEditando) {
+      const idosos = JSON.parse(localStorage.getItem('idosos')) || [];
+      const idosoParaEditar = idosos.find(idoso => idoso.id === parseInt(id));
+      
+      if (idosoParaEditar) {
+        const dataEntradaFormatada = idosoParaEditar.dataEntrada 
+          ? new Date(idosoParaEditar.dataEntrada.split('/').reverse().join('-')).toISOString().split('T')[0]
+          : '';
+        
+        setFormData({
+          ...idosoParaEditar,
+          dataEntrada: dataEntradaFormatada
+        });
+      }
+    }
+  }, [estaEditando, id]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    
+    let valorFormatado = value;
+    if (name === 'cpf') {
+      valorFormatado = formatarCPF(value);
+    } else if (name === 'telefone') {
+      valorFormatado = formatarTelefone(value);
+    } else if (name === 'cep') {
+      valorFormatado = formatarCEP(value);
+    }
+    
+    setFormData({
+      ...formData,
+      [name]: valorFormatado
+    });
+  };
+
+  const calcularIdade = (dataNascimento) => {
+    if (!dataNascimento) return 0;
+    const hoje = new Date();
+    const nascimento = new Date(dataNascimento);
+    let idade = hoje.getFullYear() - nascimento.getFullYear();
+    const mes = hoje.getMonth() - nascimento.getMonth();
+    if (mes < 0 || (mes === 0 && hoje.getDate() < nascimento.getDate())) {
+      idade--;
+    }
+    return idade;
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setSubmetido(true);
+    
+    const errosValidacao = validarFormulario(formData);
+    setErros(errosValidacao);
+    
+    if (Object.keys(errosValidacao).length === 0) {
+      const idosos = JSON.parse(localStorage.getItem('idosos')) || [];
+      const dataEntradaFormatada = formData.dataEntrada
+        ? new Date(formData.dataEntrada).toLocaleDateString('pt-BR')
+        : '';
+      const idade = calcularIdade(formData.dataNascimento);
+
+      if (estaEditando) {
+        const novosIdosos = idosos.map(idoso => 
+          idoso.id === parseInt(id) 
+            ? { 
+                ...formData,
+                id: parseInt(id),
+                idade,
+                dataEntrada: dataEntradaFormatada,
+                status: idoso.status || 'ativo'
+              } 
+            : idoso
+        );
+        localStorage.setItem('idosos', JSON.stringify(novosIdosos));
+      } else {
+        const novoIdoso = {
+          ...formData,
+          id: Date.now(),
+          idade,
+          dataEntrada: dataEntradaFormatada,
+          status: 'ativo'
+        };
+        localStorage.setItem('idosos', JSON.stringify([...idosos, novoIdoso]));
+      }
+      
+      alert(estaEditando ? 'Cadastro atualizado com sucesso!' : 'Cadastro realizado com sucesso!');
+      navigate('/');
+    }
+  };
+
+  return (
+    <Container fluid className="container-principal">
+      <Row className="mb-4 linha-cabecalho">
+        <Col className="d-flex justify-content-between align-items-center">
+          <h2>{estaEditando ? 'Editar Idoso' : 'Cadastro de Idoso'}</h2>
+          <Breadcrumb>
+            <Breadcrumb.Item href="/">Idosos</Breadcrumb.Item>
+            <Breadcrumb.Item active>
+              {estaEditando ? 'Edição' : 'Novo Cadastro'}
+            </Breadcrumb.Item>
+          </Breadcrumb>
+        </Col>
+      </Row>
+
+      {submetido && Object.keys(erros).length > 0 && (
+        <Alert variant="danger" className="mb-4">
+          Por favor, corrija os erros no formulário antes de enviar.
+        </Alert>
+      )}
+
+      <Form onSubmit={handleSubmit} noValidate>
+        <Card className="mb-4 secao-formulario">
+          <Card.Header>
+            <PersonFill className="me-2" /> Dados Pessoais
+          </Card.Header>
+          <Card.Body>
+            <Row>
+              <Col md={6} className="mb-3">
+                <Form.Label>Nome Completo</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="nome"
+                  value={formData.nome}
+                  onChange={handleChange}
+                  isInvalid={!!erros.nome}
+                  required
+                />
+                <Form.Control.Feedback type="invalid">
+                  {erros.nome}
+                </Form.Control.Feedback>
+              </Col>
+              <Col md={3} className="mb-3">
+                <Form.Label>Data de Nascimento</Form.Label>
+                <Form.Control
+                  type="date"
+                  name="dataNascimento"
+                  value={formData.dataNascimento}
+                  onChange={handleChange}
+                  isInvalid={!!erros.dataNascimento}
+                  required
+                />
+                <Form.Control.Feedback type="invalid">
+                  {erros.dataNascimento}
+                </Form.Control.Feedback>
+              </Col>
+              <Col md={3} className="mb-3">
+                <Form.Label>Gênero</Form.Label>
+                <Form.Select
+                  name="genero"
+                  value={formData.genero}
+                  onChange={handleChange}
+                  isInvalid={!!erros.genero}
+                  required
+                >
+                  <option value="">Selecione</option>
+                  <option value="Masculino">Masculino</option>
+                  <option value="Feminino">Feminino</option>
+                  <option value="Outro">Outro</option>
+                </Form.Select>
+                <Form.Control.Feedback type="invalid">
+                  {erros.genero}
+                </Form.Control.Feedback>
+              </Col>
+            </Row>
+            <Row>
+              <Col md={3} className="mb-3">
+                <Form.Label>RG</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="rg"
+                  value={formData.rg}
+                  onChange={handleChange}
+                  isInvalid={!!erros.rg}
+                  required
+                />
+                <Form.Control.Feedback type="invalid">
+                  {erros.rg}
+                </Form.Control.Feedback>
+              </Col>
+              <Col md={3} className="mb-3">
+                <Form.Label>CPF</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="cpf"
+                  value={formData.cpf}
+                  onChange={handleChange}
+                  isInvalid={!!erros.cpf}
+                  maxLength="14"
+                  required
+                />
+                <Form.Control.Feedback type="invalid">
+                  {erros.cpf}
+                </Form.Control.Feedback>
+              </Col>
+              <Col md={3} className="mb-3">
+                <Form.Label>Cartão SUS</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="cartaoSus"
+                  value={formData.cartaoSus}
+                  onChange={handleChange}
+                  isInvalid={!!erros.cartaoSus}
+                  required
+                />
+                <Form.Control.Feedback type="invalid">
+                  {erros.cartaoSus}
+                </Form.Control.Feedback>
+              </Col>
+              <Col md={3} className="mb-3">
+                <Form.Label>Telefone</Form.Label>
+                <Form.Control
+                  type="tel"
+                  name="telefone"
+                  value={formData.telefone}
+                  onChange={handleChange}
+                  isInvalid={!!erros.telefone}
+                  maxLength="15"
+                  required
+                />
+                <Form.Control.Feedback type="invalid">
+                  {erros.telefone}
+                </Form.Control.Feedback>
+              </Col>
+            </Row>
+          </Card.Body>
+        </Card>
+
+        <Card className="mb-4 secao-formulario">
+          <Card.Header>
+            <HouseFill className="me-2" /> Endereço
+          </Card.Header>
+          <Card.Body>
+            <Row>
+              <Col md={6} className="mb-3">
+                <Form.Label>Rua</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="rua"
+                  value={formData.rua}
+                  onChange={handleChange}
+                  isInvalid={!!erros.rua}
+                  required
+                />
+                <Form.Control.Feedback type="invalid">
+                  {erros.rua}
+                </Form.Control.Feedback>
+              </Col>
+              <Col md={2} className="mb-3">
+                <Form.Label>Número</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="numero"
+                  value={formData.numero}
+                  onChange={handleChange}
+                  isInvalid={!!erros.numero}
+                  required
+                />
+                <Form.Control.Feedback type="invalid">
+                  {erros.numero}
+                </Form.Control.Feedback>
+              </Col>
+              <Col md={4} className="mb-3">
+                <Form.Label>Complemento</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="complemento"
+                  value={formData.complemento}
+                  onChange={handleChange}
+                />
+              </Col>
+            </Row>
+            <Row>
+              <Col md={5} className="mb-3">
+                <Form.Label>Cidade</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="cidade"
+                  value={formData.cidade}
+                  onChange={handleChange}
+                  isInvalid={!!erros.cidade}
+                  required
+                />
+                <Form.Control.Feedback type="invalid">
+                  {erros.cidade}
+                </Form.Control.Feedback>
+              </Col>
+              <Col md={3} className="mb-3">
+                <Form.Label>Estado</Form.Label>
+                <Form.Select
+                  name="estado"
+                  value={formData.estado}
+                  onChange={handleChange}
+                  isInvalid={!!erros.estado}
+                  required
+                >
+                  <option value="">Selecione</option>
+                  {estadosBrasileiros.map(estado => (
+                    <option key={estado.sigla} value={estado.sigla}>
+                      {estado.nome}
+                    </option>
+                  ))}
+                </Form.Select>
+                <Form.Control.Feedback type="invalid">
+                  {erros.estado}
+                </Form.Control.Feedback>
+              </Col>
+              <Col md={4} className="mb-3">
+                <Form.Label>CEP</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="cep"
+                  value={formData.cep}
+                  onChange={handleChange}
+                  isInvalid={!!erros.cep}
+                  maxLength="9"
+                  required
+                />
+                <Form.Control.Feedback type="invalid">
+                  {erros.cep}
+                </Form.Control.Feedback>
+              </Col>
+            </Row>
+          </Card.Body>
+        </Card>
+
+        <Card className="mb-4 secao-formulario">
+          <Card.Header>
+            <CalendarCheck className="me-2" /> Dados de Internação
+          </Card.Header>
+          <Card.Body>
+            <Row>
+              <Col md={4} className="mb-3">
+                <Form.Label>Data de Entrada</Form.Label>
+                <Form.Control
+                  type="date"
+                  name="dataEntrada"
+                  value={formData.dataEntrada}
+                  onChange={handleChange}
+                  isInvalid={!!erros.dataEntrada}
+                  required
+                />
+                <Form.Control.Feedback type="invalid">
+                  {erros.dataEntrada}
+                </Form.Control.Feedback>
+              </Col>
+              <Col md={4} className="mb-3">
+                <Form.Label>Quarto</Form.Label>
+                <Form.Select
+                  name="quarto"
+                  value={formData.quarto}
+                  onChange={handleChange}
+                  isInvalid={!!erros.quarto}
+                  required
+                >
+                  <option value="">Selecione o quarto</option>
+                  <option value="12A">12A</option>
+                  <option value="8B">8B</option>
+                  <option value="5C">5C</option>
+                  <option value="3A">3A</option>
+                  <option value="7B">7B</option>
+                </Form.Select>
+                <Form.Control.Feedback type="invalid">
+                  {erros.quarto}
+                </Form.Control.Feedback>
+              </Col>
+              <Col md={4} className="mb-3">
+                <Form.Label>Cama</Form.Label>
+                <Form.Select
+                  name="cama"
+                  value={formData.cama}
+                  onChange={handleChange}
+                  isInvalid={!!erros.cama}
+                  required
+                >
+                  <option value="">Selecione a cama</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                </Form.Select>
+                <Form.Control.Feedback type="invalid">
+                  {erros.cama}
+                </Form.Control.Feedback>
+              </Col>
+            </Row>
+          </Card.Body>
+        </Card>
+
+        <Card className="mb-4 secao-formulario">
+          <Card.Header>
+            <FileText className="me-2" /> Informações Adicionais
+          </Card.Header>
+          <Card.Body>
+            <Form.Group className="mb-3">
+              <Form.Label>Observações</Form.Label>
+              <Form.Control 
+                as="textarea" 
+                rows={3}
+                name="observacoes"
+                value={formData.observacoes}
+                onChange={handleChange}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Histórico Médico (opcional)</Form.Label>
+              <Form.Control 
+                as="textarea" 
+                rows={3}
+                name="historicoMedico"
+                value={formData.historicoMedico}
+                onChange={handleChange}
+              />
+            </Form.Group>
+          </Card.Body>
+        </Card>
+
+        <div className="d-flex justify-content-end gap-2 mb-4">
+          <Button 
+            variant="secondary" 
+            onClick={() => navigate('/')}
+          >
+            Cancelar
+          </Button>
+          <Button variant="primary" type="submit">
+            {estaEditando ? 'Atualizar Cadastro' : 'Salvar Cadastro'}
+          </Button>
+        </div>
+      </Form>
+    </Container>
+  );
+};
+
+export default SataCadastroIdosos;
