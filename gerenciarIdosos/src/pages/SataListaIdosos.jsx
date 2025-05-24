@@ -17,7 +17,8 @@ import {
   Search, 
   Pencil, 
   Trash, 
-  Eye 
+  Eye,
+  X 
 } from 'react-bootstrap-icons';
 import { useNavigate } from 'react-router-dom';
 import './SataListaIdosos.css';
@@ -31,8 +32,6 @@ const SataListaIdosos = () => {
   const [termoBusca, setTermoBusca] = useState('');
   const [carregando, setCarregando] = useState(true);
   const [erroCarregamento, setErroCarregamento] = useState(null);
-
-  // Estado inicial vazio - os dados virão do localStorage
   const [idosos, setIdosos] = useState([]);
 
   // Carrega dados do localStorage ao iniciar
@@ -42,7 +41,6 @@ const SataListaIdosos = () => {
       if (dadosSalvos) {
         setIdosos(JSON.parse(dadosSalvos));
       } else {
-        // Se não houver dados, inicializa com array vazio
         localStorage.setItem('idosos', JSON.stringify([]));
       }
       setCarregando(false);
@@ -80,8 +78,8 @@ const SataListaIdosos = () => {
       const termo = termoBusca.toLowerCase();
       return (
         idoso.nome.toLowerCase().includes(termo) ||
-        idoso.cpf.includes(termo) ||
-        idoso.quarto.toLowerCase().includes(termo)
+        (idoso.cpf && idoso.cpf.toString().includes(termo)) ||
+        (idoso.quarto && idoso.quarto.toLowerCase().includes(termo))
       );
     }
     
@@ -136,6 +134,7 @@ const SataListaIdosos = () => {
                 <Button 
                   variant="primary"
                   onClick={() => navigate('/cadastro')}
+                  aria-label="Cadastrar novo idoso"
                 >
                   <PlusCircle className="me-1" /> Novo Idoso
                 </Button>
@@ -152,7 +151,13 @@ const SataListaIdosos = () => {
               <Card className="mb-4">
                 <Card.Header className="d-flex justify-content-between align-items-center">
                   <h5 className="mb-0">Filtros e Busca</h5>
-                  <Button variant="outline-secondary" size="sm" data-bs-toggle="collapse" data-bs-target="#filtrosCollapse">
+                  <Button 
+                    variant="outline-secondary" 
+                    size="sm" 
+                    data-bs-toggle="collapse" 
+                    data-bs-target="#filtrosCollapse"
+                    aria-label="Mostrar/ocultar filtros"
+                  >
                     <Funnel className="me-1" /> Filtros
                   </Button>
                 </Card.Header>
@@ -160,7 +165,11 @@ const SataListaIdosos = () => {
                   <Row>
                     <Col md={4} className="mb-3">
                       <Form.Label>Status</Form.Label>
-                      <Form.Select value={filtroStatus} onChange={(e) => setFiltroStatus(e.target.value)}>
+                      <Form.Select 
+                        value={filtroStatus} 
+                        onChange={(e) => setFiltroStatus(e.target.value)}
+                        aria-label="Filtrar por status"
+                      >
                         <option value="">Todos</option>
                         <option value="ativo">Ativos</option>
                         <option value="inativo">Inativos</option>
@@ -168,7 +177,11 @@ const SataListaIdosos = () => {
                     </Col>
                     <Col md={4} className="mb-3">
                       <Form.Label>Ordenar por</Form.Label>
-                      <Form.Select value={filtroOrdenacao} onChange={(e) => setFiltroOrdenacao(e.target.value)}>
+                      <Form.Select 
+                        value={filtroOrdenacao} 
+                        onChange={(e) => setFiltroOrdenacao(e.target.value)}
+                        aria-label="Ordenar lista"
+                      >
                         <option value="nome_asc">Nome (A-Z)</option>
                         <option value="nome_desc">Nome (Z-A)</option>
                         <option value="data_asc">Data de Entrada (Mais antigo)</option>
@@ -185,9 +198,14 @@ const SataListaIdosos = () => {
                           placeholder="Nome, CPF ou quarto..."
                           value={termoBusca}
                           onChange={(e) => setTermoBusca(e.target.value)}
+                          aria-label="Campo de busca"
                         />
-                        <Button variant="outline-secondary">
-                          <Search />
+                        <Button 
+                          variant={termoBusca ? 'outline-danger' : 'outline-secondary'}
+                          onClick={() => setTermoBusca('')}
+                          aria-label={termoBusca ? 'Limpar busca' : 'Buscar'}
+                        >
+                          {termoBusca ? <X /> : <Search />}
                         </Button>
                       </InputGroup>
                     </Col>
@@ -198,61 +216,62 @@ const SataListaIdosos = () => {
               <Card>
                 <Card.Body>
                   <div className="table-responsive">
-                    <Table striped hover responsive>
-                      <thead>
-                        <tr>
-                          <th>Nome</th>
-                          <th>Idade</th>
-                          <th>CPF</th>
-                          <th>Quarto</th>
-                          <th>Data de Entrada</th>
-                          <th>Status</th>
-                          <th>Ações</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {idososOrdenados.map(idoso => (
-                          <tr key={idoso.id}>
-                            <td>{idoso.nome}</td>
-                            <td>{idoso.idade}</td>
-                            <td>{idoso.cpf}</td>
-                            <td>{idoso.quarto}</td>
-                            <td>{idoso.dataEntrada}</td>
-                            <td>
-                              <span className={`status-${idoso.status}`}>
-                                {idoso.status === 'ativo' ? 'Ativo' : 'Inativo'}
-                              </span>
-                            </td>
-                            <td className="botoes-acao">
-                              <Button 
-                                variant="outline-primary" 
-                                size="sm" 
-                                title="Editar"
-                                onClick={() => navigate(`/editar/${idoso.id}`)}
-                              >
-                                <Pencil />
-                              </Button>
-                              <Button 
-                                variant="outline-danger" 
-                                size="sm" 
-                                title="Excluir"
-                                onClick={() => handleExcluirClick(idoso)}
-                              >
-                                <Trash />
-                              </Button>
-                              <Button 
-                                variant="outline-secondary" 
-                                size="sm" 
-                                title="Detalhes"
-                                onClick={() => navigate(`/detalhes/${idoso.id}`)}
-                              >
-                                <Eye />
-                              </Button>
-                            </td>
+                    {idososOrdenados.length === 0 ? (
+                      <Alert variant="warning">
+                        Nenhum idoso encontrado com os filtros atuais.
+                      </Alert>
+                    ) : (
+                      <Table striped hover responsive>
+                        <thead>
+                          <tr>
+                            <th>Nome</th>
+                            <th>Idade</th>
+                            <th>CPF</th>
+                            <th>Cidade</th>
+                            <th>Ações</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </Table>
+                        </thead>
+                        <tbody>
+                          {idososOrdenados.map(idoso => (
+                            <tr key={idoso.id}>
+                              <td>{idoso.nome}</td>
+                              <td>{idoso.idade}</td>
+                              <td>{idoso.cpf}</td>
+                              <td>{idoso.cidade}</td>
+                              <td className="botoes-acao">
+                                <Button 
+                                  variant="outline-primary" 
+                                  size="sm" 
+                                  title="Editar"
+                                  aria-label={`Editar ${idoso.nome}`}
+                                  onClick={() => navigate(`/editar/${idoso.id}`)}
+                                >
+                                  <Pencil />
+                                </Button>
+                                <Button 
+                                  variant="outline-danger" 
+                                  size="sm" 
+                                  title="Excluir"
+                                  aria-label={`Excluir ${idoso.nome}`}
+                                  onClick={() => handleExcluirClick(idoso)}
+                                >
+                                  <Trash />
+                                </Button>
+                                <Button 
+                                  variant="outline-secondary" 
+                                  size="sm" 
+                                  title="Detalhes"
+                                  aria-label={`Ver detalhes de ${idoso.nome}`}
+                                  onClick={() => navigate(`/detalhes/${idoso.id}`)}
+                                >
+                                  <Eye />
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </Table>
+                    )}
                   </div>
                 </Card.Body>
               </Card>

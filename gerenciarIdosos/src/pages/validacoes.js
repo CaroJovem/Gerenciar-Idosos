@@ -80,7 +80,7 @@ export const estadosBrasileiros = [
 export const validarFormulario = (formData) => {
   const erros = {};
   const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0); // Remove a parte de hora para comparar apenas datas
+  hoje.setHours(0, 0, 0, 0);
 
   // Validação de Dados Pessoais
   if (!formData.nome.trim()) {
@@ -150,7 +150,7 @@ export const validarFormulario = (formData) => {
   }
   
   // Validação de Dados de Internação
-  if (!formData.dataEntrada) {
+  /*if (!formData.dataEntrada) {
     erros.dataEntrada = 'Data de entrada é obrigatória';
   } else {
     const dataEntrada = new Date(formData.dataEntrada);
@@ -165,7 +165,7 @@ export const validarFormulario = (formData) => {
   
   if (!formData.cama) {
     erros.cama = 'Cama é obrigatória';
-  }
+  }*/
   
   return erros;
 };

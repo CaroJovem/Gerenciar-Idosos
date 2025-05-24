@@ -11,9 +11,7 @@ import {
 } from 'react-bootstrap';
 import { 
   PersonFill, 
-  HouseFill, 
-  CalendarCheck,
-  FileText 
+  HouseFill
 } from 'react-bootstrap-icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import './SataCadastroIdosos.css';
@@ -43,12 +41,7 @@ const SataCadastroIdosos = () => {
     complemento: '',
     cidade: '',
     estado: '',
-    cep: '',
-    dataEntrada: '',
-    quarto: '',
-    cama: '',
-    observacoes: '',
-    historicoMedico: ''
+    cep: ''
   });
   
   const [erros, setErros] = useState({});
@@ -60,13 +53,8 @@ const SataCadastroIdosos = () => {
       const idosoParaEditar = idosos.find(idoso => idoso.id === parseInt(id));
       
       if (idosoParaEditar) {
-        const dataEntradaFormatada = idosoParaEditar.dataEntrada 
-          ? new Date(idosoParaEditar.dataEntrada.split('/').reverse().join('-')).toISOString().split('T')[0]
-          : '';
-        
         setFormData({
-          ...idosoParaEditar,
-          dataEntrada: dataEntradaFormatada
+          ...idosoParaEditar
         });
       }
     }
@@ -111,9 +99,6 @@ const SataCadastroIdosos = () => {
     
     if (Object.keys(errosValidacao).length === 0) {
       const idosos = JSON.parse(localStorage.getItem('idosos')) || [];
-      const dataEntradaFormatada = formData.dataEntrada
-        ? new Date(formData.dataEntrada).toLocaleDateString('pt-BR')
-        : '';
       const idade = calcularIdade(formData.dataNascimento);
 
       if (estaEditando) {
@@ -123,7 +108,6 @@ const SataCadastroIdosos = () => {
                 ...formData,
                 id: parseInt(id),
                 idade,
-                dataEntrada: dataEntradaFormatada,
                 status: idoso.status || 'ativo'
               } 
             : idoso
@@ -134,7 +118,6 @@ const SataCadastroIdosos = () => {
           ...formData,
           id: Date.now(),
           idade,
-          dataEntrada: dataEntradaFormatada,
           status: 'ativo'
         };
         localStorage.setItem('idosos', JSON.stringify([...idosos, novoIdoso]));
@@ -377,96 +360,6 @@ const SataCadastroIdosos = () => {
                 </Form.Control.Feedback>
               </Col>
             </Row>
-          </Card.Body>
-        </Card>
-
-        <Card className="mb-4 secao-formulario">
-          <Card.Header>
-            <CalendarCheck className="me-2" /> Dados de Internação
-          </Card.Header>
-          <Card.Body>
-            <Row>
-              <Col md={4} className="mb-3">
-                <Form.Label>Data de Entrada</Form.Label>
-                <Form.Control
-                  type="date"
-                  name="dataEntrada"
-                  value={formData.dataEntrada}
-                  onChange={handleChange}
-                  isInvalid={!!erros.dataEntrada}
-                  required
-                />
-                <Form.Control.Feedback type="invalid">
-                  {erros.dataEntrada}
-                </Form.Control.Feedback>
-              </Col>
-              <Col md={4} className="mb-3">
-                <Form.Label>Quarto</Form.Label>
-                <Form.Select
-                  name="quarto"
-                  value={formData.quarto}
-                  onChange={handleChange}
-                  isInvalid={!!erros.quarto}
-                  required
-                >
-                  <option value="">Selecione o quarto</option>
-                  <option value="12A">12A</option>
-                  <option value="8B">8B</option>
-                  <option value="5C">5C</option>
-                  <option value="3A">3A</option>
-                  <option value="7B">7B</option>
-                </Form.Select>
-                <Form.Control.Feedback type="invalid">
-                  {erros.quarto}
-                </Form.Control.Feedback>
-              </Col>
-              <Col md={4} className="mb-3">
-                <Form.Label>Cama</Form.Label>
-                <Form.Select
-                  name="cama"
-                  value={formData.cama}
-                  onChange={handleChange}
-                  isInvalid={!!erros.cama}
-                  required
-                >
-                  <option value="">Selecione a cama</option>
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                </Form.Select>
-                <Form.Control.Feedback type="invalid">
-                  {erros.cama}
-                </Form.Control.Feedback>
-              </Col>
-            </Row>
-          </Card.Body>
-        </Card>
-
-        <Card className="mb-4 secao-formulario">
-          <Card.Header>
-            <FileText className="me-2" /> Informações Adicionais
-          </Card.Header>
-          <Card.Body>
-            <Form.Group className="mb-3">
-              <Form.Label>Observações</Form.Label>
-              <Form.Control 
-                as="textarea" 
-                rows={3}
-                name="observacoes"
-                value={formData.observacoes}
-                onChange={handleChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Histórico Médico (opcional)</Form.Label>
-              <Form.Control 
-                as="textarea" 
-                rows={3}
-                name="historicoMedico"
-                value={formData.historicoMedico}
-                onChange={handleChange}
-              />
-            </Form.Group>
           </Card.Body>
         </Card>
 
