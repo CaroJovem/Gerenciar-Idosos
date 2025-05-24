@@ -9,7 +9,8 @@ import {
   Modal, 
   Form,
   InputGroup,
-  Alert
+  Alert,
+  Badge
 } from 'react-bootstrap';
 import { 
   PlusCircle, 
@@ -18,7 +19,8 @@ import {
   Pencil, 
   Trash, 
   Eye,
-  X 
+  X,
+  Hospital
 } from 'react-bootstrap-icons';
 import { useNavigate } from 'react-router-dom';
 import './SataListaIdosos.css';
@@ -34,7 +36,6 @@ const SataListaIdosos = () => {
   const [erroCarregamento, setErroCarregamento] = useState(null);
   const [idosos, setIdosos] = useState([]);
 
-  // Carrega dados do localStorage ao iniciar
   useEffect(() => {
     try {
       const dadosSalvos = localStorage.getItem('idosos');
@@ -51,7 +52,6 @@ const SataListaIdosos = () => {
     }
   }, []);
 
-  // Salva dados no localStorage sempre que houver alteração
   useEffect(() => {
     if (!carregando) {
       localStorage.setItem('idosos', JSON.stringify(idosos));
@@ -69,8 +69,23 @@ const SataListaIdosos = () => {
     setMostrarModalExclusao(false);
   };
 
+  const calcularIdade = (dataNascimento) => {
+    if (!dataNascimento) return 0;
+    const hoje = new Date();
+    const nascimento = new Date(dataNascimento);
+    let idade = hoje.getFullYear() - nascimento.getFullYear();
+    const mes = hoje.getMonth() - nascimento.getMonth();
+    if (mes < 0 || (mes === 0 && hoje.getDate() < nascimento.getDate())) {
+      idade--;
+    }
+    return idade;
+  };
+
   const idososFiltrados = idosos.filter(idoso => {
-    if (filtroStatus && idoso.status !== filtroStatus) {
+    if (filtroStatus === 'internado' && !idoso.dataEntrada) {
+      return false;
+    }
+    if (filtroStatus === 'nao_internado' && idoso.dataEntrada) {
       return false;
     }
     
@@ -93,15 +108,15 @@ const SataListaIdosos = () => {
       case 'nome_desc':
         return b.nome.localeCompare(a.nome);
       case 'data_asc':
-        return new Date(a.dataEntrada.split('/').reverse().join('-')) - 
-               new Date(b.dataEntrada.split('/').reverse().join('-'));
+        return new Date(a.dataEntrada || '9999-12-31') - 
+               new Date(b.dataEntrada || '9999-12-31');
       case 'data_desc':
-        return new Date(b.dataEntrada.split('/').reverse().join('-')) - 
-               new Date(a.dataEntrada.split('/').reverse().join('-'));
+        return new Date(b.dataEntrada || '0001-01-01') - 
+               new Date(a.dataEntrada || '0001-01-01');
       case 'idade_asc':
-        return a.idade - b.idade;
+        return calcularIdade(a.dataNascimento) - calcularIdade(b.dataNascimento);
       case 'idade_desc':
-        return b.idade - a.idade;
+        return calcularIdade(b.dataNascimento) - calcularIdade(a.dataNascimento);
       default:
         return 0;
     }
@@ -171,8 +186,8 @@ const SataListaIdosos = () => {
                         aria-label="Filtrar por status"
                       >
                         <option value="">Todos</option>
-                        <option value="ativo">Ativos</option>
-                        <option value="inativo">Inativos</option>
+                        <option value="internado">Internados</option>
+                        <option value="nao_internado">Não Internados</option>
                       </Form.Select>
                     </Col>
                     <Col md={4} className="mb-3">
@@ -228,6 +243,7 @@ const SataListaIdosos = () => {
                             <th>Idade</th>
                             <th>CPF</th>
                             <th>Cidade</th>
+                            <th>Status</th>
                             <th>Ações</th>
                           </tr>
                         </thead>
@@ -235,9 +251,17 @@ const SataListaIdosos = () => {
                           {idososOrdenados.map(idoso => (
                             <tr key={idoso.id}>
                               <td>{idoso.nome}</td>
-                              <td>{idoso.idade}</td>
+                              <td>{calcularIdade(idoso.dataNascimento)}</td>
                               <td>{idoso.cpf}</td>
                               <td>{idoso.cidade}</td>
+                              <td>
+                                <Badge 
+                                  bg={idoso.dataEntrada ? 'info' : 'secondary'}
+                                  className="status-badge"
+                                >
+                                  {idoso.dataEntrada ? 'Internado' : 'Não Internado'}
+                                </Badge>
+                              </td>
                               <td className="botoes-acao">
                                 <Button 
                                   variant="outline-primary" 
@@ -248,6 +272,17 @@ const SataListaIdosos = () => {
                                 >
                                   <Pencil />
                                 </Button>
+                                {!idoso.dataEntrada && (
+                                  <Button 
+                                    variant="outline-info" 
+                                    size="sm" 
+                                    title="Adicionar Internação"
+                                    aria-label={`Adicionar internação para ${idoso.nome}`}
+                                    onClick={() => navigate(`/editar/${idoso.id}/internacao`)}
+                                  >
+                                    <Hospital />
+                                  </Button>
+                                )}
                                 <Button 
                                   variant="outline-danger" 
                                   size="sm" 

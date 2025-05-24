@@ -10,20 +10,9 @@
 }
 
 /* Status badges */
-.status-ativo {
-  background-color: #d4edda;
-  color: #155724;
-  padding: 3px 8px;
-  border-radius: 4px;
+.status-badge {
   font-size: 0.85rem;
-}
-
-.status-inativo {
-  background-color: #f8d7da;
-  color: #721c24;
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 0.85rem;
+  font-weight: normal;
 }
 
 /* Botões de ação */
@@ -64,5 +53,11 @@
   
   .botoes-acao .btn {
     margin-bottom: 5px;
+  }
+  
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }

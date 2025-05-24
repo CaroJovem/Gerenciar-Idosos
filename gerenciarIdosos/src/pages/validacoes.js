@@ -1,4 +1,3 @@
-// validacoes.js
 export const validarCPF = (cpf) => {
   cpf = cpf.replace(/[^\d]+/g, '');
   if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
@@ -149,8 +148,16 @@ export const validarFormulario = (formData) => {
     erros.cep = 'CEP inválido';
   }
   
+  return erros;
+};
+
+export const validarFormularioInternacao = (formData) => {
+  const erros = {};
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
   // Validação de Dados de Internação
-  /*if (!formData.dataEntrada) {
+  if (!formData.dataEntrada) {
     erros.dataEntrada = 'Data de entrada é obrigatória';
   } else {
     const dataEntrada = new Date(formData.dataEntrada);
@@ -161,11 +168,15 @@ export const validarFormulario = (formData) => {
   
   if (!formData.quarto) {
     erros.quarto = 'Quarto é obrigatório';
+  } else if (!/^[A-Za-z0-9-]+$/.test(formData.quarto)) {
+    erros.quarto = 'Quarto deve conter apenas letras, números e hífen';
   }
   
   if (!formData.cama) {
     erros.cama = 'Cama é obrigatória';
-  }*/
+  } else if (!/^[A-Za-z0-9-]+$/.test(formData.cama)) {
+    erros.cama = 'Cama deve conter apenas letras, números e hífen';
+  }
   
   return erros;
 };

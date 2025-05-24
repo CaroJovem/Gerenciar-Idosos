@@ -48,7 +48,6 @@
   font-weight: 500;
 }
 
-/* Ajustes responsivos */
 @media (max-width: 768px) {
   .linha-cabecalho {
     flex-direction: column;
